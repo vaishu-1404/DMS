@@ -1,82 +1,54 @@
-# from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 from api.models import *
 
-# client
+# File Serializer
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = File
-        fields = '__all__'
+        fields = ['file']
+
+# Client Serializer
 
 class ClientSerializer(serializers.ModelSerializer):
-    files = serializers.SerializerMethodField()
+    mom = serializers.SerializerMethodField()
+    pf = serializers.SerializerMethodField()
 
     class Meta:
         model = Client
-        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail','files']
+        fields = ['id','client_name','entity_type','date_of_incorporation','contact_person','designation','contact_no_1','contact_no_2','email','business_detail','mom','pf']
 
-    def get_files(self, obj):
-        files = File.objects.filter(client=obj)
-        return FileSerializer(files, many=True, read_only = False).data
+    def get_mom(self, obj):
+        return FileSerializer(obj.mom.all(), many=True).data
 
-    # class Meta:
-    #     model = Client
-    #     fields = ['files','client_name','entity_type']
+    def get_pf(self, obj):
+        return FileSerializer(obj.pf.all(), many=True).data
 
+    def create(self, validated_data):
+        mom_files = self.context['request'].FILES.getlist('mom')
+        pf_files = self.context['request'].FILES.getlist('pf')
 
-# class FileListSerializer(serializers.ModelSerializer):
+        file_instance = Client.objects.create(
+            client_name=validated_data.get('client_name'),
+            entity_type=validated_data.get('entity_type'),
+            date_of_incorporation=validated_data.get('date_of_incorporation'),
+            contact_person=validated_data.get('contact_person'),
+            designation=validated_data.get('designation'),
+            contact_no_1=validated_data.get('contact_no_1'),
+            contact_no_2=validated_data.get('contact_no_2'),
+            email=validated_data.get('email'),
+            business_detail=validated_data.get('business_detail'),
+        )
 
-#     parser_classes = [MultiPartParser, FormParser]
+        # Handle mom files
+        for mom_file in mom_files:
+            uploaded_file = File.objects.create(file=mom_file)
+            file_instance.mom.add(uploaded_file)
 
-#     files = serializers.ListField(
-#         child = serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False)
-#     )
+        # Handle pf files
+        for pf_file in pf_files:
+            uploaded_file = File.objects.create(file=pf_file)
+            file_instance.pf.add(uploaded_file)
 
-#     class Meta:
-#         model = File
-#         fields = '__all__'
-
-#     def create(self, validated_data):
-#         client = Client.objects.create()
-#         files = validated_data.pop('files')
-#         files_obj =[]
-#         for file in files:
-#             files_obj = File.objects.create(client=client, files=file)
-#             files_obj.append(files_obj)
-#         return files_obj
-
-#     mom = serializers.ListField(
-#         child=serializers.FileField(max_length=10000,
-#                                     allow_empty_file=False,
-#                                     use_url=False)
-#     )
-#     # class Meta:
-#     #     model = Client
-#     #     fields = '__all__'
-#     def create(self,validated_data):
-#         mom = validated_data.pop('mom')
-#         for file in mom:
-#             f = Client.objects.create(mom=file,**validated_data)
-#         return f
-
-# class ClientFileSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ClientFile
-#         fields = ['mom']
-
-# class ClientSerializer(serializers.ModelSerializer):
-#     mom = ClientFileSerializer(many=True, required=False)
-
-#     class Meta:
-#         model = Client
-#         fields = '__all__'
-
-#     def create(self, validated_data):
-#         data = validated_data.pop('mom')
-#         # data = self.context['request'].FILES.getlist('mom')
-#         client = Client.objects.create(**validated_data)
-#         for data in data:
-#             ClientFile.objects.create(client=client, **data)
-#         return client
+        return file_instance

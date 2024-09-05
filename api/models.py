@@ -28,9 +28,12 @@ class Bank(models.Model):
     def __str__(self):
         return self.bank_name
 
+#File Model
+class File(models.Model):
+    file = models.FileField(upload_to='uploads/')
+
 # Client Model
 class Client(models.Model):
-
     entites = [
        ('proprietorship','Proprietorship'),
        ('partnership', 'Partnership'),
@@ -51,18 +54,11 @@ class Client(models.Model):
     contact_no_2 = models.IntegerField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     business_detail = models.TextField(null=True, blank=True)
-    # mom = models.ManyToManyField(ClientFile, related_name="client")
-    # pf = models.FileField(upload_to='pf/',null=True, blank=True)
-    # owner = models.ManyToManyField(Owner, related_name='Client', blank=True)
-    # bank = models.ManyToManyField(Bank, related_name='Client', blank=True)
+    mom = models.ManyToManyField(File, related_name='mom_files', blank=True)
+    pf = models.ManyToManyField(File, related_name='pf_files', blank=True)
 
     def __str__(self):
         return self.client_name  if self.client_name else 'No name provided'
-
-#File
-class File(models.Model):
-    client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    files = models.FileField(upload_to='files')
 
 #User Model
 class User(models.Model):
