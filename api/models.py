@@ -1,32 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser, Group, Permission
 import os
 
 # Create your models here.
-
-#Owner Model
-class Owner(models.Model):
-    owner_name = models.CharField(max_length=100, null=True, blank=True)
-    share = models.IntegerField(default=100, null=True, blank=True)
-    pan = models.CharField(max_length=10, null=True, blank=True)
-    aadhar = models.CharField(max_length=12, null=True, blank=True)
-    mobile = models.IntegerField(null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-    it_password = models.CharField(max_length=50, null=True, blank=True)
-
-    def __str__(self):
-        return self.owner_name
-
-# Bank Model
-class Bank(models.Model):
-    bank_name = models.CharField(max_length=100, null=True, blank=True)
-    account_no = models.IntegerField(null=True, blank=True)
-    ifsc = models.CharField(max_length=50, null=True, blank=True)
-    account_type = models.CharField(max_length=50, null=True, blank=True)
-    branch = models.CharField(max_length=100, null=True, blank=True)
-    attachment = models.FileField(null=True, blank=True)
-
-    def __str__(self):
-        return self.bank_name
 
 #File Model
 class File(models.Model):
@@ -60,10 +36,37 @@ class Client(models.Model):
     def __str__(self):
         return self.client_name  if self.client_name else 'No name provided'
 
+# Bank Model
+class Bank(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    bank_name = models.CharField(max_length=100, null=True, blank=True)
+    account_no = models.IntegerField(null=True, blank=True)
+    ifsc = models.CharField(max_length=50, null=True, blank=True)
+    account_type = models.CharField(max_length=50, null=True, blank=True)
+    branch = models.CharField(max_length=100, null=True, blank=True)
+    attachment = models.FileField(null=True, blank=True)
+
+    def __str__(self):
+        return self.bank_name
+
+#Owner Model
+class Owner(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    owner_name = models.CharField(max_length=100, null=True, blank=True)
+    share = models.IntegerField(default=100, null=True, blank=True)
+    pan = models.CharField(max_length=10, null=True, blank=True)
+    aadhar = models.CharField(max_length=12, null=True, blank=True)
+    mobile = models.IntegerField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
+    it_password = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return self.owner_name
+
 #User Model
-class User(models.Model):
-    first_name = models.CharField(max_length=100, null=True, blank=True)
-    last_name = models.CharField(max_length=100, null=True, blank=True)
+class CustomUser(AbstractUser):
+    # first_name = models.CharField(max_length=100, null=True, blank=True)
+    # last_name = models.CharField(max_length=100, null=True, blank=True)
     ca_admin = models.BooleanField(null=True, blank=True)
     ca_user = models.BooleanField(null=True, blank=True)
     cus_admin = models.BooleanField(null=True, blank=True)

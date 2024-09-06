@@ -52,3 +52,15 @@ class ClientSerializer(serializers.ModelSerializer):
             file_instance.pf.add(uploaded_file)
 
         return file_instance
+
+# Bank Serializer
+class BankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bank
+        fields = '__all__'
+
+# Owner Serializer
+class OwnerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Owner
+        fields = '__all__'
