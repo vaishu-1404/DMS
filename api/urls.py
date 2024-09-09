@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.urls import path, include
 from api.views import *
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
     path('create-client', create_client.as_view(), name='create-client'),
@@ -18,4 +22,13 @@ urlpatterns = [
     path('edit-owner/<int:pk>/<int:owner_pk>',view=edit_owner, name='edit-owner'),
     path('list-owner/<int:pk>',view=list_owner, name='list-owner'),
     path('delete-owner/<int:pk>/<int:owner_pk>',view=delete_owner, name='delete-owner'),
+
+    path('user-login', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('users', view=getUsers, name='users'),
+    path('user-profile', view=getUserProfile, name='user-profile'),
+    path('user-dashboardform', view=dashboarduser, name='dashboard-user'),
+    path('user-clientform/<int:pk>', view=clientuser, name='client'),
+    path('activate/<uidb64>/<token>',ActivateAccountView.as_view(),name='activate'),
+
+
 ]

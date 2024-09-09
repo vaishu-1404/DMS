@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 from api.models import *
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # File Serializer
 
@@ -64,3 +65,55 @@ class OwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Owner
         fields = '__all__'
+
+class CustomeUserSerializer(serializers.ModelSerializer):
+    # name = serializers.SerializerMethodField(read_only= True)
+    # ca_admin = serializers.SerializerMethodField()
+    # cus_admin = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = ['id','username','email', 'ca_admin', 'cus_admin','name','first_name','last_name']
+
+    # def get_name(self, obj):
+    #     firstname = obj.first_name
+    #     lastname = obj.last_name
+    #     name = firstname + ' ' + lastname
+    #     if name==' ':
+    #         name = 'Set Your Name'
+    #     return name
+
+    # def get_ca_admin(self,obj):
+    #     return obj.is_staff
+
+    # def get_cus_admin(self, obj):
+    #     return obj.is_staff
+
+class UserSerializerWithToken(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField(read_only= True)
+    token = serializers.SerializerMethodField(read_only = True)
+    ca_admin = serializers.SerializerMethodField()
+    cus_admin = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = ['id','username','email','name','first_name','last_name','ca_admin', 'cus_admin', 'token','client']
+
+    def get_name(self, obj):
+        firstname = obj.first_name
+        lastname = obj.last_name
+        name = firstname + ' ' + lastname
+        if name==' ':
+            name = 'Set Your Name'
+        return name
+
+
+    def get_ca_admin(self,obj):
+        return obj.is_staff
+
+    def get_cus_admin(self, obj):
+        return obj.is_staff
+
+    def get_token(self, obj):
+        token = RefreshToken.for_user(obj)
+        return str(token.access_token)

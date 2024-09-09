@@ -1,11 +1,25 @@
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from api.models import *
 from api.serializers import *
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django.contrib.auth.hashers import make_password
+# for sending mails and generate token
+from django.template.loader import render_to_string # used returns the resulting content as a string
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode #  used to safely encode and decode data in a URL-friendly format
+from .utils import TokenGenerator, generate_token
+from django.utils.encoding import force_bytes, force_text, DjangoUnicodeDecodeError #  helps in managing string and byte conversions
+from django.core.mail import EmailMessage # used to construct and send email messages
+from django.conf import settings
+from django.views.generic import View
+from django.shortcuts import render
+
 
 
 # Client View's
@@ -49,15 +63,21 @@ def detail_client(request,pk):
     client = Client.objects.get(id=pk)
     view_bank = Bank.objects.filter(client=client)
     view_owner = Owner.objects.filter(client=client)
+    view_dashboarduser = CustomUser.objects.filter(client=client)
+    view_clientuser = CustomUser.objects.filter(client=client)
 
     client_serializer = ClientSerializer(client)
     bank_serializer = BankSerializer(view_bank, many=True)
     owner_serializer = OwnerSerializer(view_owner, many=True)
+    view_dashboarduser = UserSerializerWithToken(view_dashboarduser, many=True)
+    view_clientuser = UserSerializerWithToken(view_clientuser, many=True)
 
     data ={
         'client' : client_serializer.data,
         'bank' : bank_serializer.data,
-        'owner' : owner_serializer.data
+        'owner' : owner_serializer.data,
+        'dashboarduser' : view_dashboarduser.data,
+        'clientuser' : view_clientuser.data
     }
     return Response(data)
 
@@ -144,7 +164,113 @@ def delete_owner(request, pk, owner_pk):
     return Response('Failed to delete owner')
 
 
+# class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+#     @classmethod
+#     def get_token(cls, user):
+#         token = super().get_token(user)
+
+#         # Add custom claims
+#         token['username'] = user.username
+#         token['email'] = user.email
+#         # ...
+
+#         return token
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        serializer = UserSerializerWithToken(self.user).data
+        for k,v in serializer.items():
+             data[k]=v
+        return data
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
 
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) # the user should be valid
+def getUserProfile(request):
+    user = request.user # to get the specific user
+    serializer = UserSerializerWithToken(user, many=False)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser]) # the user should be an admin only
+def getUsers(request):
+    user = CustomUser.objects.all() # to get the list of all users
+    serializer = UserSerializerWithToken(user, many=True)
+    return Response(serializer.data)
+
+# Dashboard User Form
+@api_view(['POST'])
+def dashboarduser(request):
+    # client = get_object_or_404(Client, id=pk)
+    data = request.data
+    try:
+        user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
+                                     email=data['email'],password=make_password(data['password']), is_active=False)
+        # generate token for email sending
+        email_subject = "Activate You Account"
+        message = render_to_string(
+            "activate.html",
+            {
+                'user': user,
+                'domain': '127.0.0.1:8000',
+                'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
+                'token' : generate_token.make_token(user),
+            }
+        )
+        # print(message)
+        email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
+        email_message.send()
+        serializer = UserSerializerWithToken(user, many=False)
+        return Response(serializer.data)
+    except:
+        message = {'User Already Exist'}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+# Client User Form
+@api_view(['POST'])
+def clientuser(request,pk):
+    client = get_object_or_404(Client, id=pk)
+    data = request.data
+    try:
+        user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
+                                     email=data['email'],password=make_password(data['password']), is_active=False)
+        # generate token for email sending
+        email_subject = "Activate You Account"
+        message = render_to_string(
+            "activate.html",
+            {
+                'user': user,
+                'domain': '127.0.0.1:8000',
+                'uid' : urlsafe_base64_encode(force_bytes(user.pk)),
+                'token' : generate_token.make_token(user),
+            }
+        )
+        # print(message)
+        email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
+        email_message.send()
+        serializer = UserSerializerWithToken(user, many=False)
+        return Response(serializer.data)
+    except:
+        message = {'User Already Exist'}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+
+class ActivateAccountView(View):
+    def get(self, request, uidb64, token):
+        try:
+            uid= force_text(urlsafe_base64_decode(uidb64))
+            user = CustomUser.objects.get(pk=uid)
+        except Exception as identifier:
+            user=None
+        if user is not None and generate_token.check_token(user,token):
+            user.is_active=True
+            user.save()
+            return render(request,"activatesuccess.html")
+        else:
+            return render(request,"activatefail.html")
 
 

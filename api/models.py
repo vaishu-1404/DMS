@@ -65,13 +65,30 @@ class Owner(models.Model):
 
 #User Model
 class CustomUser(AbstractUser):
+
+    groups = models.ManyToManyField(
+        Group,
+        related_name='customuser_set',  # Unique related_name for groups
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups',
+    )
+
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='customuser_permissions_set',  # Unique related_name for permissions
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
+    )
     # first_name = models.CharField(max_length=100, null=True, blank=True)
     # last_name = models.CharField(max_length=100, null=True, blank=True)
-    ca_admin = models.BooleanField(null=True, blank=True)
+    name = models.CharField(max_length=50, null=True, blank=True)
+    ca_admin = models.BooleanField(default=False, null=True, blank=True)
     ca_user = models.BooleanField(null=True, blank=True)
-    cus_admin = models.BooleanField(null=True, blank=True)
+    cus_admin = models.BooleanField(default=False, null=True, blank=True)
     cus_user = models.BooleanField(null=True, blank=True)
-    company = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
 
 #Branch Model
 class Branch(models.Model):

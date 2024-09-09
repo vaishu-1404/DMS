@@ -4,7 +4,7 @@ from api.models import *
 # Register your models here.
 admin.site.register(Client)
 admin.site.register(File)
-# admin.site.register(User)
+admin.site.register(CustomUser)
 # admin.site.register(Branch)
 # admin.site.register(OfficeLocation)
 # admin.site.register(Customer)
