@@ -19,10 +19,10 @@ from django.core.mail import EmailMessage # used to construct and send email mes
 from django.conf import settings
 from django.views.generic import View
 from django.shortcuts import render
+# from django.views.decorators.csrf import csrf_exempt
 
 
-
-# Client View's
+#  *******************************************Client View's***********************************************
 class create_client(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
@@ -63,25 +63,30 @@ def detail_client(request,pk):
     client = Client.objects.get(id=pk)
     view_bank = Bank.objects.filter(client=client)
     view_owner = Owner.objects.filter(client=client)
-    view_dashboarduser = CustomUser.objects.filter(client=client)
+    # view_dashboarduser = CustomUser.objects.filter(client=client)
     view_clientuser = CustomUser.objects.filter(client=client)
+    view_companydoc = CompanyDocument.objects.filter(client=client)
+
 
     client_serializer = ClientSerializer(client)
     bank_serializer = BankSerializer(view_bank, many=True)
     owner_serializer = OwnerSerializer(view_owner, many=True)
-    view_dashboarduser = UserSerializerWithToken(view_dashboarduser, many=True)
-    view_clientuser = UserSerializerWithToken(view_clientuser, many=True)
+    # view_dashboarduser = UserSerializerWithToken(view_dashboarduser, many=True)
+    clientuser = UserSerializerWithToken(view_clientuser, many=True)
+    companydoc = CompanyDocSerailizer(view_companydoc, many=True)
+
 
     data ={
         'client' : client_serializer.data,
         'bank' : bank_serializer.data,
         'owner' : owner_serializer.data,
-        'dashboarduser' : view_dashboarduser.data,
-        'clientuser' : view_clientuser.data
+        # 'dashboarduser' : view_dashboarduser.data,
+        'clientuser' : clientuser.data,
+        'Company Document' : companydoc.data,
     }
     return Response(data)
 
-# Bank View's
+# ***********************************************Bank View's******************************************************
 
 @api_view(['POST'])
 def create_bank(request, pk):
@@ -122,7 +127,7 @@ def delete_bank(request,pk, bank_pk):
         return Response('Bank is Deleted')
     return Response('Fail to Delete Bank')
 
-# Owners View's
+# **********************************************Owners View's*******************************************
 
 @api_view(['POST'])
 def create_owner(request, pk):
@@ -131,7 +136,8 @@ def create_owner(request, pk):
         owner_serializer = OwnerSerializer(data=request.data)
         if owner_serializer.is_valid():
             owner_serializer.save(client=client)
-            return Response(owner_serializer.data,status=status.HTTP_201_CREATED)
+            return Response( {'message': 'Owner Created', 'data': owner_serializer.data},
+                    status=status.HTTP_201_CREATED)
         return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
@@ -163,19 +169,9 @@ def delete_owner(request, pk, owner_pk):
         return Response('Owner is deleted')
     return Response('Failed to delete owner')
 
+# ******************************************User's Views*******************************************
 
-# class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-#     @classmethod
-#     def get_token(cls, user):
-#         token = super().get_token(user)
-
-#         # Add custom claims
-#         token['username'] = user.username
-#         token['email'] = user.email
-#         # ...
-
-#         return token
-
+# Login
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
@@ -187,8 +183,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
-
-
+# User Profile
 @api_view(['GET'])
 @permission_classes([IsAuthenticated]) # the user should be valid
 def getUserProfile(request):
@@ -196,6 +191,7 @@ def getUserProfile(request):
     serializer = UserSerializerWithToken(user, many=False)
     return Response(serializer.data)
 
+# Users List
 @api_view(['GET'])
 @permission_classes([IsAdminUser]) # the user should be an admin only
 def getUsers(request):
@@ -206,7 +202,6 @@ def getUsers(request):
 # Dashboard User Form
 @api_view(['POST'])
 def dashboarduser(request):
-    # client = get_object_or_404(Client, id=pk)
     data = request.data
     try:
         user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
@@ -237,8 +232,8 @@ def clientuser(request,pk):
     client = get_object_or_404(Client, id=pk)
     data = request.data
     try:
-        user = CustomUser.objects.create(first_name=data['fname'],last_name=data['lname'],username=data['email'],
-                                     email=data['email'],password=make_password(data['password']), is_active=False)
+        user = CustomUser.objects.create(first_name=data['first_name'],last_name=data['last_name'],username=data['email'],
+                                     email=data['email'],password=make_password(data['password']), is_active=False, client=client)
         # generate token for email sending
         email_subject = "Activate You Account"
         message = render_to_string(
@@ -259,6 +254,7 @@ def clientuser(request,pk):
         message = {'User Already Exist'}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
 
+# Email Activations
 class ActivateAccountView(View):
     def get(self, request, uidb64, token):
         try:
@@ -272,5 +268,89 @@ class ActivateAccountView(View):
             return render(request,"activatesuccess.html")
         else:
             return render(request,"activatefail.html")
+
+# Clientuser Update
+@api_view(['PUT'])
+def edit_clientuser(request, pk, user_pk):
+    client = Client.objects.get(id=pk)
+    user = CustomUser.objects.get(id = user_pk)
+    if request.method == 'PUT':
+        user_serializer = UserSerializerWithToken(data=request.data, instance=user)
+        if user_serializer.is_valid():
+            user_serializer.save(client=client)
+            return Response('Client User Updated')
+        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+# DashboardUser Update
+@api_view(['PUT'])
+def edit_dashboardUser(requst, user_pk):
+    # client = Client.objects.get(id=pk)
+    user = CustomUser.objects.get(id=user_pk)
+    if requst.method == 'PUT':
+        user_serializr = UserSerializerWithToken(data=requst.data, instance=user)
+        if user_serializr.is_valid():
+            user_serializr.save()
+            return Response('Dashboard User Updated')
+        return Response(user_serializr.errors,status=status.HTTP_400_BAD_REQUEST)
+
+# ClientUser Delete
+@api_view(['DELETE'])
+def delete_clientuser(request,pk,user_pk):
+    client = Client.objects.get(id=pk)
+    user = CustomUser.objects.get(id = user_pk)
+    if request.method == 'DELETE':
+        user.delete()
+        return Response ('Client User is deleted')
+    return Response ('Failed to delete Client User')
+
+# DashboardUser Delete
+@api_view(['DELETE'])
+def delete_dashboarduser(request, user_pk):
+    user = CustomUser.objects.get(id = user_pk)
+    if request.method == 'DELETE':
+        user.delete()
+        return Response('Dashboard User deleted')
+    return Response ('Failed to delete dashboard user')
+
+# ******************************************Company Document **************************************
+
+@api_view(['POST'])
+def create_companydoc(request,pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'POST':
+        doc_serializer = CompanyDocSerailizer(data=request.data)
+        if doc_serializer.is_valid():
+            doc_serializer.save(client=client)
+            return Response(doc_serializer.data, status=status.HTTP_201_CREATED)
+        return Response (doc_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def edit_companydoc(request,pk,companydoc_pk):
+    client = Client.objects.get(id=pk)
+    doc = CompanyDocument.objects.get(id=companydoc_pk)
+    if request.method == 'PUT':
+        doc_serializer = CompanyDocSerailizer(instance=doc, data=request.data)
+        if doc_serializer.is_valid():
+            doc_serializer.save()
+            return Response ("Document Updated")
+        return Response (doc_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_companydoc(request,pk):
+    client = Client.objects.get(id=pk)
+    doc_list = CompanyDocument.objects.filter(client=client)
+    serializer = CompanyDocSerailizer(doc_list,many=True)
+    print(serializer)
+    return Response(serializer.data)
+
+@api_view(['DELETE'])
+def delete_companydoc(request,pk,companydoc_pk):
+    client = Client.objects.get(id=pk)
+    doc = CompanyDocument.objects.get(id=companydoc_pk)
+    if request.method == 'DELETE':
+        doc.delete()
+        return Response("Document Deleted")
+    return Response("Failed to delete document")
+
 
 

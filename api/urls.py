@@ -29,6 +29,14 @@ urlpatterns = [
     path('user-dashboardform', view=dashboarduser, name='dashboard-user'),
     path('user-clientform/<int:pk>', view=clientuser, name='client'),
     path('activate/<uidb64>/<token>',ActivateAccountView.as_view(),name='activate'),
+    path('edit-clientuser/<int:pk>/<int:user_pk>', view=edit_clientuser, name='edit-clientuser'),
+    path('user-dashboarduser/<int:user_pk>', view=edit_dashboardUser, name='edit-dashboarduser'),
+    path('delete-clientuser/<int:pk>/<int:user_pk>', view=delete_clientuser, name='delete-clientuser'),
+    path('delete-dashboarduser/<int:user_pk>', view=delete_dashboarduser, name='delete-dashboarduser'),
 
+    path('create-companydoc/<int:pk>', view=create_companydoc, name='create-companydoc'),
+    path('edit-companydoc/<int:pk>/<int:companydoc_pk>', view=edit_companydoc, name='edit-companydoc'),
+    path('list-companydoc/<int:pk>', view=list_companydoc, name='list-companydoc'),
+    path('delete-companydoc/<int:pk>/<int:companydoc_pk>', view=delete_companydoc, name='delete-companydoc'),
 
 ]

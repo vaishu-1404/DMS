@@ -53,7 +53,8 @@ class Bank(models.Model):
 class Owner(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     owner_name = models.CharField(max_length=100, null=True, blank=True)
-    share = models.IntegerField(default=100, null=True, blank=True)
+    default_share = models.IntegerField(default=100, null=True, blank=True)
+    share = models.IntegerField()
     pan = models.CharField(max_length=10, null=True, blank=True)
     aadhar = models.CharField(max_length=12, null=True, blank=True)
     mobile = models.IntegerField(null=True, blank=True)
@@ -89,6 +90,27 @@ class CustomUser(AbstractUser):
     cus_admin = models.BooleanField(default=False, null=True, blank=True)
     cus_user = models.BooleanField(null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+
+# CompanyDocument Model
+class CompanyDocument(models.Model):
+
+    document_type = [
+        ('pan', 'PAN'),
+        ('tan', 'TAN'),
+        ('msme','MSME'),
+        ('udym', 'UDYM'),
+        ('mca', 'MCA'),
+        ('pf', 'PF'),
+        ('esic', 'ESIC'),
+        ('other', 'OTHER'),
+    ]
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    document_type = models.CharField(max_length=100, choices=document_type, null=True, blank=True)
+    login = models.CharField(max_length=100, null=True, blank=True)
+    password = models.CharField(max_length=100, null=True, blank=True)
+    remark = models.TextField(null=True, blank=True)
+    file = models.FileField(null=True, blank=True)
+
 
 #Branch Model
 class Branch(models.Model):
@@ -214,26 +236,6 @@ class PurchaseInvoice(models.Model):
    tcs = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-# CompanyDocument Model
-class CompanyDocument(models.Model):
-
-    document_type = [
-        ('Pan', 'PAN'),
-        ('tan', 'TAN'),
-        ('msme','MSME'),
-        ('udym', 'UDYM'),
-        ('mca', 'MCA'),
-        ('pf', 'PF'),
-        ('esic', 'ESIC'),
-        ('other', 'OTHER'),
-    ]
-    company = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
-    document_type = models.CharField(max_length=100, choices=document_type, null=True, blank=True)
-    login = models.CharField(max_length=100, null=True, blank=True)
-    password = models.CharField(max_length=100, null=True, blank=True)
-    remark = models.TextField(null=True, blank=True)
-    file = models.FileField(null=True, blank=True)
 
 # Branch Document Model
 class BranchDocument(models.Model):

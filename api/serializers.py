@@ -66,29 +66,7 @@ class OwnerSerializer(serializers.ModelSerializer):
         model = Owner
         fields = '__all__'
 
-class CustomeUserSerializer(serializers.ModelSerializer):
-    # name = serializers.SerializerMethodField(read_only= True)
-    # ca_admin = serializers.SerializerMethodField()
-    # cus_admin = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CustomUser
-        fields = ['id','username','email', 'ca_admin', 'cus_admin','name','first_name','last_name']
-
-    # def get_name(self, obj):
-    #     firstname = obj.first_name
-    #     lastname = obj.last_name
-    #     name = firstname + ' ' + lastname
-    #     if name==' ':
-    #         name = 'Set Your Name'
-    #     return name
-
-    # def get_ca_admin(self,obj):
-    #     return obj.is_staff
-
-    # def get_cus_admin(self, obj):
-    #     return obj.is_staff
-
+# User Serializer
 class UserSerializerWithToken(serializers.ModelSerializer):
     name = serializers.SerializerMethodField(read_only= True)
     token = serializers.SerializerMethodField(read_only = True)
@@ -107,7 +85,6 @@ class UserSerializerWithToken(serializers.ModelSerializer):
             name = 'Set Your Name'
         return name
 
-
     def get_ca_admin(self,obj):
         return obj.is_staff
 
@@ -117,3 +94,10 @@ class UserSerializerWithToken(serializers.ModelSerializer):
     def get_token(self, obj):
         token = RefreshToken.for_user(obj)
         return str(token.access_token)
+
+
+# Company Document
+class CompanyDocSerailizer (serializers.ModelSerializer):
+    class Meta:
+        model = CompanyDocument
+        fields ='__all__'
