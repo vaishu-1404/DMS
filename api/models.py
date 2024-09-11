@@ -23,6 +23,7 @@ class Client(models.Model):
 
     client_name = models.CharField(max_length=100, null=True, blank=True)
     entity_type = models.CharField(max_length=100, choices=entites, null=True, blank=True)
+    # default_share = models.IntegerField(default=100, null=True, blank=True)
     date_of_incorporation = models.DateField(null=True, blank=True)
     contact_person = models.CharField(max_length=100, null=True, blank=True)
     designation = models.CharField(max_length=100, null=True, blank=True)
@@ -53,7 +54,7 @@ class Bank(models.Model):
 class Owner(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     owner_name = models.CharField(max_length=100, null=True, blank=True)
-    default_share = models.IntegerField(default=100, null=True, blank=True)
+    # default_share = models.IntegerField(default=100, null=True, blank=True)
     share = models.IntegerField()
     pan = models.CharField(max_length=10, null=True, blank=True)
     aadhar = models.CharField(max_length=12, null=True, blank=True)

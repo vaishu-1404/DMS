@@ -135,21 +135,54 @@ def create_owner(request, pk):
     if request.method == 'POST':
         owner_serializer = OwnerSerializer(data=request.data)
         if owner_serializer.is_valid():
+            # new_share = owner_serializer.validated_data['share']
+            total_shares = sum([owner.share for owner in Owner.objects.all()])
+            remaining_shares = 100 - total_shares
+            new_share = owner_serializer.validated_data['share']
+            print(f"total Owner Shares: {total_shares}")
+            print(f"New Owner Shares: {new_share}")
+            print(f"Remaining Shares: {remaining_shares}")
+            if new_share > remaining_shares:
+                # owner_serializer.save(client=client)
+                return Response ({
+                    'error': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning'
+                }, status=status.HTTP_400_BAD_REQUEST)
             owner_serializer.save(client=client)
-            return Response( {'message': 'Owner Created', 'data': owner_serializer.data},
-                    status=status.HTTP_201_CREATED)
-        return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response(owner_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+
+# @api_view(['POST'])
+# def create_owner(request, pk):
+#     client = get_object_or_404(Client, id=pk)
+#     if request.method == 'POST':
+#         owner_serializer = OwnerSerializer(data=request.data)
+#         if owner_serializer.is_valid():
+#             total_shares = sum([owner.share for owner in Owner.objects.all()])
+#             remaining_shares = 100 - total_shares
+#             new_shares = owner_serializer.validated_data['share']
+#             print(f"total Owner Shares: {total_shares}")
+#             print(f"New Owner Shares: {new_shares}")
+#             print(f"Remaining Shares: {remaining_shares}")
+#             if new_shares > remaining_shares:
+#                 return Response({'error':f'cannot provide u {new_shares}%. Avaliable shares are {remaining_shares}'}, status=status.HTTP_400_BAD_REQUEST)
+#             owner_serializer.save(client=client)
+#             return Response(owner_serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST','GET'])
 def edit_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id= pk)
     owner = Owner.objects.get(id = owner_pk)
-    if request.method == 'PUT':
+    if request.method == 'POST':
         owner_serializer = OwnerSerializer(data=request.data, instance=owner)
         if owner_serializer.is_valid():
             owner_serializer.save(client=client)
             return Response('Owner Updated')
         return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        owner_serializer1 =OwnerSerializer(owner)
+        return Response(owner_serializer1.data)
 
 @api_view(['GET'])
 def list_owner(request, pk):
@@ -160,14 +193,30 @@ def list_owner(request, pk):
     return Response(serializers.data)
 
 
+# @api_view(['DELETE'])
+# def delete_owner(request, pk, owner_pk):
+#     client = get_object_or_404(Client, id=pk)
+#     owner = Owner.objects.get(id = owner_pk)
+#     if request.method == 'DELETE':
+#         owner_share = owner.share
+#         owner.delete()
+#         total_shares = sum([o.share for o in Owner.objects.all()])
+#         remaining_share = 100 - total_shares
+#         return Response({'message': f'owner is delete {owner_share}% shares is added back. Avaliable shares is {remaining_share}'})
+#     return Response ('Owner not found', status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['DELETE'])
 def delete_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id=pk)
     owner = Owner.objects.get(id = owner_pk)
-    if request.method == 'DELETE':
+    try :
+        owner_share = owner.share
         owner.delete()
-        return Response('Owner is deleted')
-    return Response('Failed to delete owner')
+        total_shares = sum([owner.share for owner in Owner.objects.all()])
+        remaining_shares = 100 - total_shares
+        return Response({'message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
+    except :
+        return Response('Owner not found',status=status.HTTP_400_BAD_REQUEST )
 
 # ******************************************User's Views*******************************************
 
