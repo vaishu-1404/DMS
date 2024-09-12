@@ -30,7 +30,7 @@ class create_client(APIView):
         serializer = ClientSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Client Created'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -68,7 +68,7 @@ def create_bank(request, pk):
         bank_serializer = BankSerializer(data=request.data)
         if bank_serializer.is_valid():
             bank_serializer.save(client=client)
-            return Response(bank_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Bank Created'}, status=status.HTTP_201_CREATED)
         return Response(bank_serializer.error,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
@@ -121,7 +121,7 @@ def create_owner(request, pk):
                 }, status=status.HTTP_400_BAD_REQUEST)
             # save the all the data
             owner_serializer.save(client=client)
-            return Response(owner_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Owner Created'}, status=status.HTTP_201_CREATED)
         # show error if given data is not valid
         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -243,7 +243,7 @@ def clientuser(request,pk):
         email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
         email_message.send()
         serializer = UserSerializerWithToken(user, many=False)
-        return Response(serializer.data)
+        return Response({'Message':'User Registered kindly activate ur account'})
     except:
         message = {'User Already Exist'}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
@@ -315,7 +315,7 @@ def create_companydoc(request,pk):
         doc_serializer = CompanyDocSerailizer(data=request.data)
         if doc_serializer.is_valid():
             doc_serializer.save(client=client)
-            return Response(doc_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Company Document Created'}, status=status.HTTP_201_CREATED)
         return Response (doc_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
@@ -355,7 +355,7 @@ def create_branch(request, pk):
         branch_serializer = BranchSerailizer(data=request.data)
         if branch_serializer.is_valid():
             branch_serializer.save(client=client)
-            return Response(branch_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Branch Created'}, status=status.HTTP_201_CREATED)
         return Response(branch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
@@ -396,7 +396,7 @@ def create_officelocation(request,branch_pk):
         officeLocation_serializer = OfficeLocationSerializer(data=request.data)
         if officeLocation_serializer.is_valid():
             officeLocation_serializer.save(branch=branch)
-            return Response(officeLocation_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Office Location Created'}, status=status.HTTP_201_CREATED)
         return Response ('Fail to create Office Location', status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
@@ -439,7 +439,7 @@ def create_customer(request, pk):
         customer_serializer = CustomerVendorSerializer(data=request.data)
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
-            return Response(customer_serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Customer or Vendor Created'}, status=status.HTTP_201_CREATED)
         return Response ('Fail to create Customer or Vendor', status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
@@ -474,19 +474,21 @@ def delete_customer(request,pk, customer_pk):
 # **********************************************Branch Document*********************************************
 
 @api_view(['POST'])
-def create_branchdoc(request,branch_pk):
-    branch = Branch.objects.get(id=branch_pk)
+def create_branchdoc(request,pk,branch_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id=branch_pk, client=client)
     if request.method == 'POST':
         branchdoc_serializer = BranchDocSerailizer(data=request.data)
         if branchdoc_serializer.is_valid():
             branchdoc_serializer.save(branch=branch)
-            return Response(branchdoc_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Message':'Branch Document Created'}, status=status.HTTP_201_CREATED)
+        return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
-def edit_branchdoc(request, branch_pk, branchdoc_pk):
-    branch = Branch.objects.get(id=branch_pk)
-    branchdoc = BranchDocument.objects.get(id = branchdoc_pk)
+def edit_branchdoc(request,pk, branch_pk, branchdoc_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id=branch_pk, client=client)
+    branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
     if request.method == 'PUT':
         branchdoc_serializer = BranchDocSerailizer(instance=branchdoc, data=request.data)
         if branchdoc_serializer.is_valid():
@@ -494,10 +496,26 @@ def edit_branchdoc(request, branch_pk, branchdoc_pk):
             return Response('Branch Document updated')
         return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# @api_view(['GET'])
-# def list_branchdoc(request, pk, branch_pk, branchdoc_pk):
+@api_view(['GET'])
+def list_branchdoc(request, pk, branch_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id = branch_pk, client=client)
+    # branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
+    if request.method == 'GET':
+        list_branchdoc = BranchDocument.objects.filter(branch=branch)
+        branchdoc_serializer = BranchDocSerailizer(list_branchdoc, many=True)
+        print(branchdoc_serializer)
+        return Response(branchdoc_serializer.data)
 
-
+@api_view(['DELETE'])
+def delete_branchdoc(request, pk ,branch_pk, branchdoc_pk ):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id = branch_pk, client=client)
+    branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
+    if request.method == 'DELETE':
+        branchdoc.delete()
+        return Response('Branch Document Delete')
+    return Response('Fail to delete branch document', status=status.HTTP_400_BAD_REQUEST)
 
 
 # ***********************************************Detail page API's*********************************************
@@ -510,6 +528,7 @@ def detail_client(request,pk):
     view_companydoc = CompanyDocument.objects.filter(client=client)
     view_branch = Branch.objects.filter(client=client)
     view_customer = Customer.objects.filter(client=client)
+    # view_branchdoc = BranchDocument.objects.filter()
 
 
     client_serializer = ClientSerializer(client)
@@ -519,6 +538,7 @@ def detail_client(request,pk):
     companydoc = CompanyDocSerailizer(view_companydoc, many=True)
     branch_serializer = BranchSerailizer(view_branch, many=True)
     customer_serializer = CustomerVendorSerializer(view_customer, many=True)
+
 
 
     data ={
@@ -537,14 +557,17 @@ def detail_branch(request, pk, branch_pk):
     client = Client.objects.get(id = pk)
     branch = Branch.objects.get(id = branch_pk, client=client)
     officeloaction = OfficeLocation.objects.filter(branch = branch)
+    view_branchdoc = BranchDocument.objects.filter(branch=branch)
 
     branch_serializer = BranchSerailizer(branch)
     officeloaction_serializer = OfficeLocationSerializer(officeloaction, many=True)
+    branchdoc_serializer = BranchDocSerailizer(view_branchdoc, many=True)
 
     data = {
         'Client Name' :client.client_name, # to only retrive client name
         'Branch' : branch_serializer.data,
         'Office Location' : officeloaction_serializer.data,
+        'Branch Document' : branchdoc_serializer.data,
     }
     return Response(data)
 
