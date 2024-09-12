@@ -494,8 +494,9 @@ def edit_branchdoc(request, branch_pk, branchdoc_pk):
             return Response('Branch Document updated')
         return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-def list_branchdoc(request, pk, )
+# @api_view(['GET'])
+# def list_branchdoc(request, pk, branch_pk, branchdoc_pk):
+
 
 
 
