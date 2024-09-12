@@ -39,4 +39,19 @@ urlpatterns = [
     path('list-companydoc/<int:pk>', view=list_companydoc, name='list-companydoc'),
     path('delete-companydoc/<int:pk>/<int:companydoc_pk>', view=delete_companydoc, name='delete-companydoc'),
 
+    path('create-branch/<int:pk>', view=create_branch, name='create-branch'),
+    path('edit-branch/<int:pk>/<int:branch_pk>',view=edit_branch, name='edit-branch'),
+    path('list-branch/<int:pk>',view=list_branch, name='list-branch'),
+    path('delete-branch/<int:pk>/<int:branch_pk>', view=delete_branch, name='delete-branch'),
+    path('detail-branch/<int:pk>/<int:branch_pk>', view=detail_branch, name='detail-branch'),
+
+    path('create-officelocation/<int:branch_pk>', view=create_officelocation, name='create-officelocation'),
+    path('edit-officelocation/<int:branch_pk>/<int:office_pk>',view=edit_officelocation, name='edit-officelocation'),
+    path('list-officelocation/<int:pk>/<int:branch_pk>',view=list_officelocation, name='list-officelocation'),
+    path('delete-officelocation/<int:pk>/<int:branch_pk>/<int:office_pk>', view=delete_officelocation, name='delete-officelocation'),
+
+    path('create-customer/<int:pk>', view=create_customer, name='create-customer'),
+    path('edit-customer/<int:pk>/<int:customer_pk>',view=edit_customer, name='edit-customer'),
+    path('list-customer/<int:pk>',view=list_customer, name='list-customer'),
+    path('delete-customer/<int:pk>/<int:customer_pk>', view=delete_customer, name='delete-cutomer'),
 ]

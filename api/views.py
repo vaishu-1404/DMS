@@ -58,34 +58,6 @@ def delete_client(request,pk):
         return Response ('Company Deleted')
     return Response ('Fail to delete')
 
-@api_view(['GET'])
-def detail_client(request,pk):
-    client = Client.objects.get(id=pk)
-    view_bank = Bank.objects.filter(client=client)
-    view_owner = Owner.objects.filter(client=client)
-    # view_dashboarduser = CustomUser.objects.filter(client=client)
-    view_clientuser = CustomUser.objects.filter(client=client)
-    view_companydoc = CompanyDocument.objects.filter(client=client)
-
-
-    client_serializer = ClientSerializer(client)
-    bank_serializer = BankSerializer(view_bank, many=True)
-    owner_serializer = OwnerSerializer(view_owner, many=True)
-    # view_dashboarduser = UserSerializerWithToken(view_dashboarduser, many=True)
-    clientuser = UserSerializerWithToken(view_clientuser, many=True)
-    companydoc = CompanyDocSerailizer(view_companydoc, many=True)
-
-
-    data ={
-        'client' : client_serializer.data,
-        'bank' : bank_serializer.data,
-        'owner' : owner_serializer.data,
-        # 'dashboarduser' : view_dashboarduser.data,
-        'clientuser' : clientuser.data,
-        'Company Document' : companydoc.data,
-    }
-    return Response(data)
-
 # ***********************************************Bank View's******************************************************
 
 @api_view(['POST'])
@@ -135,40 +107,24 @@ def create_owner(request, pk):
     if request.method == 'POST':
         owner_serializer = OwnerSerializer(data=request.data)
         if owner_serializer.is_valid():
-            # new_share = owner_serializer.validated_data['share']
+            # sum of a for loop values of share of all the owners created
             total_shares = sum([owner.share for owner in Owner.objects.all()])
+            # calculating remaining shares by subtracting total shares by 100
             remaining_shares = 100 - total_shares
+            # new share means the value of share while creating this owner
             new_share = owner_serializer.validated_data['share']
-            print(f"total Owner Shares: {total_shares}")
-            print(f"New Owner Shares: {new_share}")
-            print(f"Remaining Shares: {remaining_shares}")
+
             if new_share > remaining_shares:
-                # owner_serializer.save(client=client)
+                # if enterd shares are greater then remaining share send a message of remaining shares
                 return Response ({
                     'error': f'Cannot assign {new_share}%. Only {remaining_shares}% is left for assigning'
                 }, status=status.HTTP_400_BAD_REQUEST)
+            # save the all the data
             owner_serializer.save(client=client)
             return Response(owner_serializer.data, status=status.HTTP_201_CREATED)
+        # show error if given data is not valid
         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# @api_view(['POST'])
-# def create_owner(request, pk):
-#     client = get_object_or_404(Client, id=pk)
-#     if request.method == 'POST':
-#         owner_serializer = OwnerSerializer(data=request.data)
-#         if owner_serializer.is_valid():
-#             total_shares = sum([owner.share for owner in Owner.objects.all()])
-#             remaining_shares = 100 - total_shares
-#             new_shares = owner_serializer.validated_data['share']
-#             print(f"total Owner Shares: {total_shares}")
-#             print(f"New Owner Shares: {new_shares}")
-#             print(f"Remaining Shares: {remaining_shares}")
-#             if new_shares > remaining_shares:
-#                 return Response({'error':f'cannot provide u {new_shares}%. Avaliable shares are {remaining_shares}'}, status=status.HTTP_400_BAD_REQUEST)
-#             owner_serializer.save(client=client)
-#             return Response(owner_serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST','GET'])
 def edit_owner(request, pk, owner_pk):
@@ -192,26 +148,15 @@ def list_owner(request, pk):
     print(serializers)
     return Response(serializers.data)
 
-
-# @api_view(['DELETE'])
-# def delete_owner(request, pk, owner_pk):
-#     client = get_object_or_404(Client, id=pk)
-#     owner = Owner.objects.get(id = owner_pk)
-#     if request.method == 'DELETE':
-#         owner_share = owner.share
-#         owner.delete()
-#         total_shares = sum([o.share for o in Owner.objects.all()])
-#         remaining_share = 100 - total_shares
-#         return Response({'message': f'owner is delete {owner_share}% shares is added back. Avaliable shares is {remaining_share}'})
-#     return Response ('Owner not found', status=status.HTTP_400_BAD_REQUEST)
-
 @api_view(['DELETE'])
 def delete_owner(request, pk, owner_pk):
     client = get_object_or_404(Client, id=pk)
     owner = Owner.objects.get(id = owner_pk)
     try :
+        # storing the value of current owner shares in a variable
         owner_share = owner.share
         owner.delete()
+        # for loop for providing the remainig shares left
         total_shares = sum([owner.share for owner in Owner.objects.all()])
         remaining_shares = 100 - total_shares
         return Response({'message': f'Owner is deleted.{owner_share}% share is added back. Avaliable shares: {remaining_shares}%'}, status=status.HTTP_200_OK)
@@ -401,5 +346,205 @@ def delete_companydoc(request,pk,companydoc_pk):
         return Response("Document Deleted")
     return Response("Failed to delete document")
 
+# ************************************** Branch View's ********************************************
+
+@api_view(['POST'])
+def create_branch(request, pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'POST':
+        branch_serializer = BranchSerailizer(data=request.data)
+        if branch_serializer.is_valid():
+            branch_serializer.save(client=client)
+            return Response(branch_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(branch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def edit_branch(request,pk,branch_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id = branch_pk)
+    if request.method == 'PUT':
+        branch_serializer = BranchSerailizer(instance=branch, data=request.data)
+        if branch_serializer.is_valid():
+            branch_serializer.save(client=client)
+            return Response('Branch Updated',status=status.HTTP_200_OK)
+        return Response('Fail to update branch', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_branch(request,pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'GET':
+        branch_list = Branch.objects.filter(client=client)
+        branch_serializer = BranchSerailizer(branch_list, many=True)
+        print(branch_serializer)
+        return Response(branch_serializer.data)
+
+@api_view(['DELETE'])
+def delete_branch(request,pk,branch_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id=branch_pk)
+    if request.method == 'DELETE':
+        branch.delete()
+        return Response ('Branch deleted')
+    return Response ('Fail to delete branch')
+
+# *************************************Office Location**********************************************
+
+@api_view(['POST'])
+def create_officelocation(request,branch_pk):
+    branch = Branch.objects.get(id=branch_pk)
+    if request.method == 'POST':
+        officeLocation_serializer = OfficeLocationSerializer(data=request.data)
+        if officeLocation_serializer.is_valid():
+            officeLocation_serializer.save(branch=branch)
+            return Response(officeLocation_serializer.data, status=status.HTTP_201_CREATED)
+        return Response ('Fail to create Office Location', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def edit_officelocation(request,branch_pk,office_pk):
+    branch = Branch.objects.get(id=branch_pk)
+    office = OfficeLocation.objects.get(id=office_pk)
+    if request.method == 'PUT':
+        officeLocation_serializer = OfficeLocationSerializer(instance=office, data=request.data)
+        if officeLocation_serializer.is_valid():
+            officeLocation_serializer.save(branch=branch)
+            return Response('Office Location Updated')
+        return Response ('Fail to update Office Location', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_officelocation(request,pk, branch_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id = branch_pk, client=client)
+    if request.method == 'GET':
+        list_officelocation= OfficeLocation.objects.filter(branch=branch)
+        officeLocation_serializer = OfficeLocationSerializer(list_officelocation, many=True)
+        print(officeLocation_serializer)
+        return Response(officeLocation_serializer.data)
+
+@api_view(['DELETE'])
+def delete_officelocation(request,pk, branch_pk, office_pk):
+    client = Client.objects.get(id=pk)
+    branch = Branch.objects.get(id=branch_pk, client=client)
+    office = OfficeLocation.objects.get(id = office_pk, branch = branch)
+    if request.method == 'DELETE':
+        office.delete()
+        return Response('Office Location deleted')
+    return Response ('Failed to delete office location', status=status.HTTP_400_BAD_REQUEST)
+
+# *************************************Customer Or Vendor **************************************
+
+@api_view(['POST'])
+def create_customer(request, pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'POST':
+        customer_serializer = CustomerVendorSerializer(data=request.data)
+        if customer_serializer.is_valid():
+            customer_serializer.save(client=client)
+            return Response(customer_serializer.data, status=status.HTTP_201_CREATED)
+        return Response ('Fail to create Customer or Vendor', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def edit_customer(request, pk, customer_pk):
+    client = Client.objects.get(id=pk)
+    customer = Customer.objects.get(id=customer_pk)
+    if request.method == 'PUT':
+        customer_serializer = CustomerVendorSerializer(instance=customer, data=request.data)
+        if customer_serializer.is_valid():
+            customer_serializer.save(client=client)
+            return Response('Customer or Vendor Updated')
+        return Response('Fail to update Customer or Vendor', status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_customer(request, pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'GET':
+        list_customer = Customer.objects.filter(client=client)
+        customer_serializer = CustomerVendorSerializer(list_customer, many=True)
+        print(customer_serializer)
+        return Response(customer_serializer.data)
+
+@api_view(['DELETE'])
+def delete_customer(request,pk, customer_pk):
+    client = Client.objects.get(id=pk)
+    customer = Customer.objects.get(id=customer_pk)
+    if request.method == 'DELETE':
+        customer.delete()
+        return Response('Customer or Vendor deleted')
+    return Response('Fail to delete Customer or Vendor')
+
+# **********************************************Branch Document*********************************************
+
+@api_view(['POST'])
+def create_branchdoc(request,branch_pk):
+    branch = Branch.objects.get(id=branch_pk)
+    if request.method == 'POST':
+        branchdoc_serializer = BranchDocSerailizer(data=request.data)
+        if branchdoc_serializer.is_valid():
+            branchdoc_serializer.save(branch=branch)
+            return Response(branchdoc_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def edit_branchdoc(request, branch_pk, branchdoc_pk):
+    branch = Branch.objects.get(id=branch_pk)
+    branchdoc = BranchDocument.objects.get(id = branchdoc_pk)
+    if request.method == 'PUT':
+        branchdoc_serializer = BranchDocSerailizer(instance=branchdoc, data=request.data)
+        if branchdoc_serializer.is_valid():
+            branchdoc_serializer.save(branch=branch)
+            return Response('Branch Document updated')
+        return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def list_branchdoc(request, pk, )
+
+
+
+# ***********************************************Detail page API's*********************************************
+@api_view(['GET'])
+def detail_client(request,pk):
+    client = Client.objects.get(id=pk)
+    view_bank = Bank.objects.filter(client=client)
+    view_owner = Owner.objects.filter(client=client)
+    view_clientuser = CustomUser.objects.filter(client=client)
+    view_companydoc = CompanyDocument.objects.filter(client=client)
+    view_branch = Branch.objects.filter(client=client)
+    view_customer = Customer.objects.filter(client=client)
+
+
+    client_serializer = ClientSerializer(client)
+    bank_serializer = BankSerializer(view_bank, many=True)
+    owner_serializer = OwnerSerializer(view_owner, many=True)
+    clientuser = UserSerializerWithToken(view_clientuser, many=True)
+    companydoc = CompanyDocSerailizer(view_companydoc, many=True)
+    branch_serializer = BranchSerailizer(view_branch, many=True)
+    customer_serializer = CustomerVendorSerializer(view_customer, many=True)
+
+
+    data ={
+        'Client' : client_serializer.data,
+        'Bank' : bank_serializer.data,
+        'Owner' : owner_serializer.data,
+        'ClientUser' : clientuser.data,
+        'Company Document' : companydoc.data,
+        'Branch' : branch_serializer.data,
+        'Customer or Vendor' : customer_serializer.data
+    }
+    return Response(data)
+
+@api_view(['GET'])
+def detail_branch(request, pk, branch_pk):
+    client = Client.objects.get(id = pk)
+    branch = Branch.objects.get(id = branch_pk, client=client)
+    officeloaction = OfficeLocation.objects.filter(branch = branch)
+
+    branch_serializer = BranchSerailizer(branch)
+    officeloaction_serializer = OfficeLocationSerializer(officeloaction, many=True)
+
+    data = {
+        'Client Name' :client.client_name, # to only retrive client name
+        'Branch' : branch_serializer.data,
+        'Office Location' : officeloaction_serializer.data,
+    }
+    return Response(data)
 
 

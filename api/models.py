@@ -115,7 +115,7 @@ class CompanyDocument(models.Model):
 
 #Branch Model
 class Branch(models.Model):
-    company = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     branch_name = models.CharField(max_length=100, null=True, blank=True)
     contact = models.IntegerField(null=True, blank=True)
     address = models.TextField(null=True, blank=True)
@@ -139,18 +139,29 @@ class OfficeLocation(models.Model):
     def __str__(self):
         return self.location
 
+# Branch Document Model
+class BranchDocument(models.Model):
+    document_type = [
+        ('ptec', 'PTEC'),
+        ('ptrc', 'PTRC'),
+        ('gst', 'GST'),
+        ('eway', 'EWAY'),
+        ('other', 'OTHER'),
+    ]
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True)
+    document_type = models.CharField(max_length=100, choices=document_type, null=True, blank=True)
+    login = models.CharField(max_length=100, null=True, blank=True)
+    password = models.CharField(max_length=100, null=True, blank=True)
+    remark = models.TextField(null=True, blank=True)
+    file = models.FileField(null=True, blank=True)
+
 #Customer or Vendor Model
 class Customer(models.Model):
-
-   type_choices = [
-         ('customer', 'Customer'),
-         ('vendor', 'Vendor'),
-     ]
    name = models.CharField(max_length=100, null=True, blank=True)
    gst_no = models.CharField(max_length=100, null=True, blank=True)
    pan = models.CharField(max_length=100, null=True, blank=True)
    address = models.TextField(null=True, blank=True)
-   type = models.CharField(max_length=100, choices=type_choices, null=True, blank=True)
+#    type = models.CharField(max_length=100, choices=type_choices, null=True, blank=True)
    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
    customer = models.BooleanField(null=True, blank=True)
    vendor = models.BooleanField(null=True, blank=True)
@@ -238,20 +249,6 @@ class PurchaseInvoice(models.Model):
    tds = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-# Branch Document Model
-class BranchDocument(models.Model):
-    document_type = [
-        ('ptec', 'PTEC'),
-        ('ptrc', 'PTRC'),
-        ('gst', 'GST'),
-        ('eway', 'EWAY'),
-        ('other', 'OTHER'),
-    ]
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True)
-    document_type = models.CharField(max_length=100, choices=document_type, null=True, blank=True)
-    login = models.CharField(max_length=100, null=True, blank=True)
-    password = models.CharField(max_length=100, null=True, blank=True)
-    remark = models.TextField(null=True, blank=True)
-    file = models.FileField(null=True, blank=True)
+
 
 

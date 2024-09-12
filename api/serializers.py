@@ -97,7 +97,31 @@ class UserSerializerWithToken(serializers.ModelSerializer):
 
 
 # Company Document
-class CompanyDocSerailizer (serializers.ModelSerializer):
+class CompanyDocSerailizer(serializers.ModelSerializer):
     class Meta:
         model = CompanyDocument
         fields ='__all__'
+
+# Branch
+class BranchSerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = '__all__'
+
+# Office Location
+class OfficeLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OfficeLocation
+        fields = '__all__'
+
+# Branch Document
+class BranchDocSerailizer(serializers.ModelSerializer):
+    class Meta:
+        model = BranchDocument
+        fields = '__all__'
+
+# Customer Or Vendor
+class CustomerVendorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = '__all__'
