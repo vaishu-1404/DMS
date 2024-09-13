@@ -30,7 +30,7 @@ class create_client(APIView):
         serializer = ClientSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            return Response({'Message':'Client Created'}, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Client Created',"data":serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -40,23 +40,26 @@ def list_client(request):
         serializers = ClientSerializer(client, many=True)
         return Response(serializers.data)
 
-@api_view(['PUT'])
+@api_view(['POST', 'GET'])
 def edit_client(request,pk):
-    if request.method == 'PUT':
-        client = Client.objects.get(id=pk)
-        client_serializer = ClientSerializer(instance=client, data=request.data)
+    client = Client.objects.get(id=pk)
+    client_serializer = ClientSerializer(instance=client, data=request.data)
+    if request.method == 'POST':
         if client_serializer.is_valid():
             client_serializer.save()
-            return Response('Client Updated')
+            return Response({'Message':'Client Updated'})
         return Response(client_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        client_ser = ClientSerializer(client)
+        return Response(client_ser.data)
 
 @api_view(['DELETE'])
 def delete_client(request,pk):
     if request.method == 'DELETE':
         client = Client.objects.get(id=pk)
         client.delete()
-        return Response ('Company Deleted')
-    return Response ('Fail to delete')
+        return Response ({'Message':'Company Deleted'})
+    return Response ({'Message':'Fail to delete'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ***********************************************Bank View's******************************************************
 
@@ -68,19 +71,23 @@ def create_bank(request, pk):
         bank_serializer = BankSerializer(data=request.data)
         if bank_serializer.is_valid():
             bank_serializer.save(client=client)
-            return Response({'Message':'Bank Created'}, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Bank Created',"data":bank_serializer.data}, status=status.HTTP_201_CREATED)
         return Response(bank_serializer.error,status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+@api_view(['POST','GET'])
 def edit_bank(request,pk,bank_pk):
     client = get_object_or_404(Client, id=pk)
     bank = Bank.objects.get(id = bank_pk)
-    if request.method == 'PUT':
-        bank_serializer = BankSerializer(data=request.data, instance=bank)
+    bank_serializer = BankSerializer(data=request.data, instance=bank)
+    if request.method == 'POST':
         if bank_serializer.is_valid():
             bank_serializer.save(client=client)
-            return Response('Bank Updated')
+            return Response({'Message':'Bank Updated'})
         return Response(bank_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        bank_ser = BankSerializer(bank)
+        return Response (bank_ser.initial_data)
+
 
 @api_view(['GET'])
 def list_bank(request, pk):
@@ -96,8 +103,8 @@ def delete_bank(request,pk, bank_pk):
     bank = Bank.objects.get(id=bank_pk)
     if request.method == 'DELETE':
         bank.delete()
-        return Response('Bank is Deleted')
-    return Response('Fail to Delete Bank')
+        return Response({'Message':'Bank is Deleted'})
+    return Response({'Error':'Fail to Delete Bank'}, status=status.HTTP_400_BAD_REQUEST)
 
 # **********************************************Owners View's*******************************************
 
@@ -121,7 +128,7 @@ def create_owner(request, pk):
                 }, status=status.HTTP_400_BAD_REQUEST)
             # save the all the data
             owner_serializer.save(client=client)
-            return Response({'Message':'Owner Created'}, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Owner Created',"data":owner_serializer.data}, status=status.HTTP_201_CREATED)
         # show error if given data is not valid
         return Response(owner_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -134,7 +141,7 @@ def edit_owner(request, pk, owner_pk):
         owner_serializer = OwnerSerializer(data=request.data, instance=owner)
         if owner_serializer.is_valid():
             owner_serializer.save(client=client)
-            return Response('Owner Updated')
+            return Response({'Message':'Owner Updated'})
         return Response(owner_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'GET':
         owner_serializer1 =OwnerSerializer(owner)
@@ -215,7 +222,7 @@ def dashboarduser(request):
         email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
         email_message.send()
         serializer = UserSerializerWithToken(user, many=False)
-        return Response(serializer.data)
+        return Response({'Message':'User Registered kindly activate ur account', 'Data': serializer.data})
     except:
         message = {'User Already Exist'}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
@@ -243,7 +250,7 @@ def clientuser(request,pk):
         email_message = EmailMessage(email_subject,message,settings.EMAIL_HOST_USER,[data['email']])
         email_message.send()
         serializer = UserSerializerWithToken(user, many=False)
-        return Response({'Message':'User Registered kindly activate ur account'})
+        return Response({'Message':'User Registered kindly activate ur account','Data': serializer.data})
     except:
         message = {'User Already Exist'}
         return Response(message, status=status.HTTP_400_BAD_REQUEST)
@@ -264,28 +271,34 @@ class ActivateAccountView(View):
             return render(request,"activatefail.html")
 
 # Clientuser Update
-@api_view(['PUT'])
+@api_view(['POST', 'GET'])
 def edit_clientuser(request, pk, user_pk):
     client = Client.objects.get(id=pk)
     user = CustomUser.objects.get(id = user_pk)
-    if request.method == 'PUT':
-        user_serializer = UserSerializerWithToken(data=request.data, instance=user)
+    user_serializer = UserSerializerWithToken(data=request.data, instance=user)
+    if request.method == 'POST':
         if user_serializer.is_valid():
             user_serializer.save(client=client)
-            return Response('Client User Updated')
+            return Response({'Message':'Client User Updated'})
         return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        user_ser = UserSerializerWithToken(user)
+        return Response(user_ser.data)
 
 # DashboardUser Update
-@api_view(['PUT'])
-def edit_dashboardUser(requst, user_pk):
+@api_view(['POST', 'GET'])
+def edit_dashboardUser(request, user_pk):
     # client = Client.objects.get(id=pk)
     user = CustomUser.objects.get(id=user_pk)
-    if requst.method == 'PUT':
-        user_serializr = UserSerializerWithToken(data=requst.data, instance=user)
-        if user_serializr.is_valid():
-            user_serializr.save()
-            return Response('Dashboard User Updated')
-        return Response(user_serializr.errors,status=status.HTTP_400_BAD_REQUEST)
+    user_serializer = UserSerializerWithToken(data=request.data, instance=user)
+    if request.method == 'POST':
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response({'Message':'Dashboard User Updated'})
+        return Response(user_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        user_ser = UserSerializerWithToken(user)
+        return Response(user_ser.data)
 
 # ClientUser Delete
 @api_view(['DELETE'])
@@ -294,8 +307,8 @@ def delete_clientuser(request,pk,user_pk):
     user = CustomUser.objects.get(id = user_pk)
     if request.method == 'DELETE':
         user.delete()
-        return Response ('Client User is deleted')
-    return Response ('Failed to delete Client User')
+        return Response ({'Message':'Client User is deleted'})
+    return Response ({'Error':'Failed to delete Client User'},status=status.HTTP_400_BAD_REQUEST)
 
 # DashboardUser Delete
 @api_view(['DELETE'])
@@ -303,8 +316,8 @@ def delete_dashboarduser(request, user_pk):
     user = CustomUser.objects.get(id = user_pk)
     if request.method == 'DELETE':
         user.delete()
-        return Response('Dashboard User deleted')
-    return Response ('Failed to delete dashboard user')
+        return Response({'Message':'Dashboard User deleted'})
+    return Response ({'Error':'Failed to delete dashboard user'},status=status.HTTP_400_BAD_REQUEST)
 
 # ******************************************Company Document **************************************
 
@@ -318,16 +331,19 @@ def create_companydoc(request,pk):
             return Response({'Message':'Company Document Created'}, status=status.HTTP_201_CREATED)
         return Response (doc_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+@api_view(['POST', 'GET'])
 def edit_companydoc(request,pk,companydoc_pk):
     client = Client.objects.get(id=pk)
     doc = CompanyDocument.objects.get(id=companydoc_pk)
-    if request.method == 'PUT':
-        doc_serializer = CompanyDocSerailizer(instance=doc, data=request.data)
+    doc_serializer = CompanyDocSerailizer(instance=doc, data=request.data)
+    if request.method == 'POST':
         if doc_serializer.is_valid():
             doc_serializer.save()
-            return Response ("Document Updated")
+            return Response ({'Message':"Document Updated"})
         return Response (doc_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        doc_ser = CompanyDocSerailizer(doc)
+        return Response(doc_ser.data)
 
 @api_view(['GET'])
 def list_companydoc(request,pk):
@@ -340,11 +356,11 @@ def list_companydoc(request,pk):
 @api_view(['DELETE'])
 def delete_companydoc(request,pk,companydoc_pk):
     client = Client.objects.get(id=pk)
-    doc = CompanyDocument.objects.get(id=companydoc_pk)
+    doc = CompanyDocument.objects.get(id=companydoc_pk, client=client)
     if request.method == 'DELETE':
         doc.delete()
-        return Response("Document Deleted")
-    return Response("Failed to delete document")
+        return Response({'Message':"Document Deleted"})
+    return Response({'Error':"Failed to delete document"},status=status.HTTP_400_BAD_REQUEST)
 
 # ************************************** Branch View's ********************************************
 
@@ -355,19 +371,22 @@ def create_branch(request, pk):
         branch_serializer = BranchSerailizer(data=request.data)
         if branch_serializer.is_valid():
             branch_serializer.save(client=client)
-            return Response({'Message':'Branch Created'}, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Branch Created', 'Data': branch_serializer.data}, status=status.HTTP_201_CREATED)
         return Response(branch_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+@api_view(['POST', 'GET'])
 def edit_branch(request,pk,branch_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id = branch_pk)
-    if request.method == 'PUT':
+    if request.method == 'POST':
         branch_serializer = BranchSerailizer(instance=branch, data=request.data)
         if branch_serializer.is_valid():
             branch_serializer.save(client=client)
-            return Response('Branch Updated',status=status.HTTP_200_OK)
-        return Response('Fail to update branch', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Message':'Branch Updated'},status=status.HTTP_200_OK)
+        return Response({'Error':'Fail to update branch'}, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        branch_ser = BranchSerailizer(branch)
+        return Response (branch_ser.data)
 
 @api_view(['GET'])
 def list_branch(request,pk):
@@ -384,8 +403,8 @@ def delete_branch(request,pk,branch_pk):
     branch = Branch.objects.get(id=branch_pk)
     if request.method == 'DELETE':
         branch.delete()
-        return Response ('Branch deleted')
-    return Response ('Fail to delete branch')
+        return Response ({'Message':'Branch deleted'})
+    return Response ({'Error':'Fail to delete branch'},status=status.HTTP_400_BAD_REQUEST)
 
 # *************************************Office Location**********************************************
 
@@ -396,19 +415,22 @@ def create_officelocation(request,branch_pk):
         officeLocation_serializer = OfficeLocationSerializer(data=request.data)
         if officeLocation_serializer.is_valid():
             officeLocation_serializer.save(branch=branch)
-            return Response({'Message':'Office Location Created'}, status=status.HTTP_201_CREATED)
-        return Response ('Fail to create Office Location', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Message':'Office Location Created', 'Data': officeLocation_serializer.data}, status=status.HTTP_201_CREATED)
+        return Response ({'Error':'Fail to create Office Location'}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+@api_view(['POST', 'GET'])
 def edit_officelocation(request,branch_pk,office_pk):
     branch = Branch.objects.get(id=branch_pk)
     office = OfficeLocation.objects.get(id=office_pk)
-    if request.method == 'PUT':
-        officeLocation_serializer = OfficeLocationSerializer(instance=office, data=request.data)
+    officeLocation_serializer = OfficeLocationSerializer(instance=office, data=request.data)
+    if request.method == 'POST':
         if officeLocation_serializer.is_valid():
             officeLocation_serializer.save(branch=branch)
-            return Response('Office Location Updated')
-        return Response ('Fail to update Office Location', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Message':'Office Loaction Update'})
+        return Response ({'Error':'Fail to update Office Location'}, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        office_ser = OfficeLocationSerializer(office)
+        return Response (office_ser.data)
 
 @api_view(['GET'])
 def list_officelocation(request,pk, branch_pk):
@@ -427,8 +449,8 @@ def delete_officelocation(request,pk, branch_pk, office_pk):
     office = OfficeLocation.objects.get(id = office_pk, branch = branch)
     if request.method == 'DELETE':
         office.delete()
-        return Response('Office Location deleted')
-    return Response ('Failed to delete office location', status=status.HTTP_400_BAD_REQUEST)
+        return Response({'Message':'Office Location deleted'})
+    return Response ({'Error':'Failed to delete office location'}, status=status.HTTP_400_BAD_REQUEST)
 
 # *************************************Customer Or Vendor **************************************
 
@@ -439,19 +461,22 @@ def create_customer(request, pk):
         customer_serializer = CustomerVendorSerializer(data=request.data)
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
-            return Response({'Message':'Customer or Vendor Created'}, status=status.HTTP_201_CREATED)
-        return Response ('Fail to create Customer or Vendor', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Message':'Customer or Vendor Created', 'Data' : customer_serializer.data}, status=status.HTTP_201_CREATED)
+        return Response ({'Error':'Fail to create Customer or Vendor'}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+@api_view(['POST', 'GET'])
 def edit_customer(request, pk, customer_pk):
     client = Client.objects.get(id=pk)
     customer = Customer.objects.get(id=customer_pk)
-    if request.method == 'PUT':
-        customer_serializer = CustomerVendorSerializer(instance=customer, data=request.data)
+    customer_serializer = CustomerVendorSerializer(instance=customer, data=request.data)
+    if request.method == 'POST':
         if customer_serializer.is_valid():
             customer_serializer.save(client=client)
-            return Response('Customer or Vendor Updated')
-        return Response('Fail to update Customer or Vendor', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'Message':'Customer or Vendor Updated'})
+        return Response({'Error':'Fail to update Customer or Vendor'}, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        customer_ser = CustomerVendorSerializer(customer)
+        return Response(customer_ser.data)
 
 @api_view(['GET'])
 def list_customer(request, pk):
@@ -468,8 +493,8 @@ def delete_customer(request,pk, customer_pk):
     customer = Customer.objects.get(id=customer_pk)
     if request.method == 'DELETE':
         customer.delete()
-        return Response('Customer or Vendor deleted')
-    return Response('Fail to delete Customer or Vendor')
+        return Response({'Message':'Customer or Vendor deleted'})
+    return Response({'Error':'Fail to delete Customer or Vendor'},status=status.HTTP_400_BAD_REQUEST)
 
 # **********************************************Branch Document*********************************************
 
@@ -481,20 +506,23 @@ def create_branchdoc(request,pk,branch_pk):
         branchdoc_serializer = BranchDocSerailizer(data=request.data)
         if branchdoc_serializer.is_valid():
             branchdoc_serializer.save(branch=branch)
-            return Response({'Message':'Branch Document Created'}, status=status.HTTP_201_CREATED)
+            return Response({'Message':'Branch Document Created', 'Data' : branchdoc_serializer.data}, status=status.HTTP_201_CREATED)
         return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PUT'])
+@api_view(['POST','GET'])
 def edit_branchdoc(request,pk, branch_pk, branchdoc_pk):
     client = Client.objects.get(id=pk)
     branch = Branch.objects.get(id=branch_pk, client=client)
     branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
-    if request.method == 'PUT':
-        branchdoc_serializer = BranchDocSerailizer(instance=branchdoc, data=request.data)
+    branchdoc_serializer = BranchDocSerailizer(instance=branchdoc, data=request.data)
+    if request.method == 'POST':
         if branchdoc_serializer.is_valid():
             branchdoc_serializer.save(branch=branch)
-            return Response('Branch Document updated')
+            return Response({'Message':'Branch Document updated'})
         return Response(branchdoc_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        branchdoc_ser = BranchDocSerailizer(branchdoc)
+        return Response(branchdoc_ser.data)
 
 @api_view(['GET'])
 def list_branchdoc(request, pk, branch_pk):
@@ -514,8 +542,8 @@ def delete_branchdoc(request, pk ,branch_pk, branchdoc_pk ):
     branchdoc = BranchDocument.objects.get(id = branchdoc_pk, branch=branch)
     if request.method == 'DELETE':
         branchdoc.delete()
-        return Response('Branch Document Delete')
-    return Response('Fail to delete branch document', status=status.HTTP_400_BAD_REQUEST)
+        return Response({'Messgae':'Branch Document Delete'})
+    return Response({'Message':'Fail to delete branch document'} ,status=status.HTTP_400_BAD_REQUEST)
 
 
 # ***********************************************Detail page API's*********************************************
