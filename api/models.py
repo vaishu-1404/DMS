@@ -17,7 +17,7 @@ class Client(models.Model):
        ('opc', 'OPC'),
        ('huf', 'HUF'),
        ('private ltd', 'Private Ltd'),
-       ('Public Limited', 'public limited'),
+       ('public limited', 'Public Limited'),
        ('trust', 'Trust')
     ]
 
@@ -178,13 +178,13 @@ class HSNCode(models.Model):
 class SalesInvoice(models.Model):
 
     invoice_type = [
-        ('B2B', 'Business to Business'),
-        ('B2C-L', 'Business to Consumer -Local'),
-        ('BSC-O', 'BSC- Other'),
-        ('Nil Rated', 'Nil Rated'),
-        ('Advance Received', 'Advance Received'),
-        ('Export', 'Export'),
-        ('Unregistered local', 'Unregistered Local'),
+        ('b2b', 'B2B'),
+        ('b2c-l', 'B2C-L'),
+        ('bsc-o', 'BSC-O'),
+        ('nil rated', 'Nil Rated'),
+        ('advance received', 'Advance Received'),
+        ('export', 'Export'),
+        ('unregistered local', 'Unregistered Local'),
     ]
 
     entry_type = [
@@ -253,9 +253,9 @@ class PurchaseInvoice(models.Model):
 # Income Tax Document
 class IncomeTaxDocument(models.Model):
     frequency_choices = [
-        ('26AS', 'Form 26AS'),
-        ('FORM_16', 'Form 16'),
-        ('BANK_STATEMENT', 'Bank Statement')
+        ('26as', '26AS'),
+        ('form_16', 'FORM 16'),
+        ('bank_statement', 'BANK_STATEMENT')
     ]
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
     document_type = models.CharField(max_length=100, choices=frequency_choices, null=True, blank=True)

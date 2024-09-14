@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'api',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
 
 ]
 
@@ -63,6 +64,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Manually added
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'document_management.urls'
@@ -208,3 +212,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'vaishnavitalari1404@gmail.com'
 EMAIL_HOST_PASSWORD = 'cqwe atgi qskn euvg'
 DEFAULT_FROM_EMAIL = 'vaishnavitalari1404@gmail.com'
+
+
+# Manually added
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_HEADERS = True
+CORS_ALLOW_ALL_ORIGIN = True
