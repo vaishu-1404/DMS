@@ -60,4 +60,14 @@ urlpatterns = [
     path('list-branchdoc/<int:pk>/<int:branch_pk>', view=list_branchdoc, name='list-branchdoc'),
     path('delete-branchdoc/<int:pk>/<int:branch_pk>/<int:branchdoc_pk>', view=delete_branchdoc, name='delete-branchdoc'),
 
+    path('create-incometaxdoc/<int:pk>', view=create_incometaxdoc, name='create-incometaxdoc'),
+    path('edit-incometaxdoc/<int:pk>/<int:income_pk>', view=edit_incometaxdoc, name='edit-incometaxdoc'),
+    path('list-incometaxdoc/<int:pk>', view=list_incometaxdoc, name='list-incometaxdoc'),
+    path('delete-incometaxdoc/<int:pk>/<int:income_pk>', view=delete_incometaxdoc, name='delete-incometaxdoc'),
+
+    path('create-pf/<int:pk>', view=create_pf, name='create-pf'),
+    path('edit-pf/<int:pk>/<int:pf_pk>', view=edit_pf, name='edit-pf'),
+    path('list-pf/<int:pk>', view=list_pf, name='list-pf'),
+    path('delete-pf/<int:pk>/<int:pf_pk>', view=delete_pf, name='delete-pf'),
+
 ]

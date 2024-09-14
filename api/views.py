@@ -545,6 +545,92 @@ def delete_branchdoc(request, pk ,branch_pk, branchdoc_pk ):
         return Response({'Messgae':'Branch Document Delete'})
     return Response({'Message':'Fail to delete branch document'} ,status=status.HTTP_400_BAD_REQUEST)
 
+# **********************************************# Income Tax Document******************************************
+@api_view(['POST'])
+def create_incometaxdoc(request,pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'POST':
+        income_serializer = IncomeTaxDocumentSerializer(data=request.data)
+        if income_serializer.is_valid():
+            income_serializer.save(client=client)
+            return Response({'Message':'Income Tax Document created', 'Data': income_serializer.data})
+        return Response ({'Error':'Fail to create income tax'},status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST','GET'])
+def edit_incometaxdoc(request, pk, income_pk):
+    client = Client.objects.get(id=pk)
+    income = IncomeTaxDocument.objects.get(id = income_pk, client=client)
+    income_serializer = IncomeTaxDocumentSerializer(instance=income, data=request.data)
+    if request.method == 'POST':
+        if income_serializer.is_valid():
+            income_serializer.save(income=income)
+            return Response({'Message':'Income tax document updated'})
+        return Response({'Error':'Fail to update'}, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        income_ser = IncomeTaxDocumentSerializer(income)
+        return Response(income_ser.data)
+
+@api_view(['GET'])
+def list_incometaxdoc(request,pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'GET':
+        list_income = IncomeTaxDocument.objects.filter(client=client)
+        income_serializer = IncomeTaxDocumentSerializer(list_income, many=True)
+        print(income_serializer)
+        return Response(income_serializer.data)
+
+@api_view(['DELETE'])
+def delete_incometaxdoc(request,pk,income_pk):
+    client = Client.objects.get(id=pk)
+    income = IncomeTaxDocument.objects.get(id=income_pk)
+    if request.method == 'DELETE':
+        income.delete()
+        return Response({'Message':'Income tax document deleted'})
+    return Response ({'Message':'Fail to delete Income tax document'}, status=status.HTTP_400_BAD_REQUEST)
+
+#*****************************************************PF*******************************************************
+@api_view(['POST'])
+def create_pf(request,pk):
+    client = Client.objects.get(id = pk)
+    if request.method == 'POST':
+        pf_serializer = PfSerializer(data=request.data)
+        if pf_serializer.is_valid():
+            pf_serializer.save(client=client)
+            return Response({'Message':'Pf created', 'Data' : pf_serializer.data})
+        return Response ({'Error':'Fail to create Pf'},status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST','GET'])
+def edit_pf(request, pk, pf_pk):
+    client = Client.objects.get(id=pk)
+    # income = IncomeTaxDocument.objects.get(id = pf_pk, client=client)
+    pf = PF.objects.get(id = pf_pk, client=client)
+    pf_serializer = PfSerializer(instance=pf, data=request.data)
+    if request.method == 'POST':
+        if  pf_serializer.is_valid():
+            pf_serializer.save()
+            return Response({'Message':'Pf updated'})
+        return Response({'Error':'Fail to update'}, status=status.HTTP_400_BAD_REQUEST)
+    elif request.method == 'GET':
+        pf_ser = PfSerializer(pf)
+        return Response(pf_ser.data)
+
+@api_view(['GET'])
+def list_pf(request,pk):
+    client = Client.objects.get(id=pk)
+    if request.method == 'GET':
+        list_pf = PF.objects.filter(client=client)
+        pf_serializer = PfSerializer(list_pf, many=True)
+        print(pf_serializer)
+        return Response(pf_serializer.data)
+
+@api_view(['DELETE'])
+def delete_pf(request,pk,pf_pk):
+    client = Client.objects.get(id=pk)
+    pf = PF.objects.get(id=pf_pk)
+    if request.method == 'DELETE':
+        pf.delete()
+        return Response({'Message':'Pf deleted'})
+    return Response ({'Message':'Fail to delete Pf'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ***********************************************Detail page API's*********************************************
 @api_view(['GET'])
@@ -556,6 +642,8 @@ def detail_client(request,pk):
     view_companydoc = CompanyDocument.objects.filter(client=client)
     view_branch = Branch.objects.filter(client=client)
     view_customer = Customer.objects.filter(client=client)
+    view_income = IncomeTaxDocument.objects.filter(client=client)
+    view_pf = PF.objects.filter(client=client)
     # view_branchdoc = BranchDocument.objects.filter()
 
 
@@ -566,6 +654,8 @@ def detail_client(request,pk):
     companydoc = CompanyDocSerailizer(view_companydoc, many=True)
     branch_serializer = BranchSerailizer(view_branch, many=True)
     customer_serializer = CustomerVendorSerializer(view_customer, many=True)
+    income_serializer = IncomeTaxDocumentSerializer(view_income, many=True)
+    pf_serializer = PfSerializer(view_pf, many=True)
 
 
 
@@ -576,7 +666,9 @@ def detail_client(request,pk):
         'ClientUser' : clientuser.data,
         'Company Document' : companydoc.data,
         'Branch' : branch_serializer.data,
-        'Customer or Vendor' : customer_serializer.data
+        'Customer or Vendor' : customer_serializer.data,
+        'Income Tax Document' : income_serializer.data,
+        'PF' : pf_serializer.data,
     }
     return Response(data)
 

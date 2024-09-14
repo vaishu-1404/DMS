@@ -250,5 +250,55 @@ class PurchaseInvoice(models.Model):
    amount_receivable = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 
+# Income Tax Document
+class IncomeTaxDocument(models.Model):
+    frequency_choices = [
+        ('26AS', 'Form 26AS'),
+        ('FORM_16', 'Form 16'),
+        ('BANK_STATEMENT', 'Bank Statement')
+    ]
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank= True)
+    document_type = models.CharField(max_length=100, choices=frequency_choices, null=True, blank=True)
+    financial_year = models.IntegerField(null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    attachment = models.FileField(null=True, blank=True)
+
+#PF
+class PF(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True,  related_name='pf_files')
+    employee_code = models.CharField(max_length=100, null=True, blank=True)
+    employee_name = models.CharField(max_length=100, null=True, blank=True)
+    uan = models.CharField(max_length=100, null=True, blank=True)
+    pf_number = models.CharField(max_length=100, null=True, blank=True)
+    pf_deducted = models.BooleanField(null=True, blank=True)
+    date_of_joining = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=100, null=True, blank=True)
+    month = models.DateField(null=True, blank=True)
+    gross_ctc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    basic_pay = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    hra = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    statutory_bouns =models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    special_allowance = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    pf = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    gratutiy = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=True)
+    total_gross_salary = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    number_of_days_in_month = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    present_days = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    lwp = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    leave_adjustment = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    gender = models.CharField(max_length=100, null=True, blank=True)
+    basic_pay_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    hra_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    statutory_bonus_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    special_allowance_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    total_gross_salary_monthly = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    provident_fund = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    professional_tax = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    advance = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    esic_employee = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    tds = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    total_deduction = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    net_pay = models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
+    advance_esic_employer_cont =models.DecimalField(decimal_places=2, max_digits=10, null=True, blank=False)
 
 

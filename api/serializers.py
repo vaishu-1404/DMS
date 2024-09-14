@@ -125,3 +125,15 @@ class CustomerVendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = '__all__'
+
+# Incometax Document
+class IncomeTaxDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IncomeTaxDocument
+        fields = '__all__'
+
+# PF
+class PfSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PF
+        fields = '__all__'
