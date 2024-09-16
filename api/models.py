@@ -4,10 +4,6 @@ import os
 
 # Create your models here.
 
-#File Model
-class File(models.Model):
-    file = models.FileField(upload_to='uploads/')
-
 # Client Model
 class Client(models.Model):
     entites = [
@@ -23,7 +19,6 @@ class Client(models.Model):
 
     client_name = models.CharField(max_length=100, null=True, blank=True)
     entity_type = models.CharField(max_length=100, choices=entites, null=True, blank=True)
-    # default_share = models.IntegerField(default=100, null=True, blank=True)
     date_of_incorporation = models.DateField(null=True, blank=True)
     contact_person = models.CharField(max_length=100, null=True, blank=True)
     designation = models.CharField(max_length=100, null=True, blank=True)
@@ -31,11 +26,27 @@ class Client(models.Model):
     contact_no_2 = models.IntegerField(null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     business_detail = models.TextField(null=True, blank=True)
-    mom = models.ManyToManyField(File, related_name='mom_files', blank=True)
-    pf = models.ManyToManyField(File, related_name='pf_files', blank=True)
-
     def __str__(self):
         return self.client_name  if self.client_name else 'No name provided'
+
+# Attachment Model
+class Attachment(models.Model):
+
+    choices = [
+        ('active', 'ACTIVE'),
+        ('inactive', 'INACTIVE')
+    ]
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    file_name = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(max_length=100, null=True, blank=True, choices=choices)
+
+    def __str__(self):
+        return self.file_name  if self.file_name else 'No name provided'
+
+#File Model
+class File(models.Model):
+    attachment = models.ForeignKey(Attachment, on_delete=models.CASCADE)
+    files = models.FileField(upload_to='attachment/')
 
 # Bank Model
 class Bank(models.Model):
@@ -54,7 +65,6 @@ class Bank(models.Model):
 class Owner(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
     owner_name = models.CharField(max_length=100, null=True, blank=True)
-    # default_share = models.IntegerField(default=100, null=True, blank=True)
     share = models.IntegerField()
     pan = models.CharField(max_length=10, null=True, blank=True)
     aadhar = models.CharField(max_length=12, null=True, blank=True)
