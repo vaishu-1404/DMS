@@ -29,12 +29,53 @@ from rest_framework.mixins import CreateModelMixin
 @api_view(['POST'])
 def create_client(request):
     if request.method == 'POST':
-        serializer = ClientSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'Message':'Client created', 'Data': serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Extract client data from request.data (excluding files)
 
+        client_data = {
+            'client_name': request.data.get('client_name'),
+            'entity_type': request.data.get('entity_type'),
+            'date_of_incorporation': request.data.get('date_of_incorporation'),
+            'contact_person': request.data.get('contact_person'),
+            'designation': request.data.get('designation'),
+            'email': request.data.get('email'),
+            'contact_no_1': request.data.get('contact_no_1'),
+            'contact_no_2': request.data.get('contact_no_2'),
+            'business_detail': request.data.get('business_detail'),
+            'status': request.data.get('status')
+        }
+
+        # Save client data using the serializer
+        client_serializer = ClientSerializer(data=client_data)
+        if client_serializer.is_valid():
+            client = client_serializer.save()
+
+
+            status1 = request.data.get('status', 'inactive')  # Default to 'inactive' if not provided
+
+            # Extract file data from request (it's inside the `files` key of the JSON)
+            files_data = request.data.get('files', [])
+
+            for file_data in files_data:
+                file_name = file_data.get('fileName')
+                file_content = file_data.get('file')  # This is the actual file name (string)
+
+                # Create an Attachment record for each file
+                attachment = Attachment.objects.create(
+                    client=client,
+                    file_name=file_name,
+                    status=status1  # Adjust status as per your logic
+                )
+
+                # Create the File record and associate it with the attachment
+                File.objects.create(
+                    attachment=attachment,
+                    files=file_content  # Save the file content to the FileField
+                )
+
+            return Response({'Message': 'Client created', 'Data': client_serializer.data}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(client_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 @api_view(['GET'])
 def list_client(request):
     if request.method == 'GET':
